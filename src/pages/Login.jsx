@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 const Login = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -31,13 +32,14 @@ const Login = () => {
             </a>
           </label>
         </div>
-
-        <button className="btn bg-blue-500 text-white w-full mt-4">
-          Login
-        </button>
+        <Link to="/applicant-dashboard">
+          <button className="btn bg-blue-500 text-white w-full mt-4">
+            Login
+          </button>
+        </Link>
 
         <p className="text-center mt-2">
-          Don't have an account yet?{' '}
+          Don't have an account yet?
           <a href="#" className="link link-hover font-semibold">
             Register now!
           </a>
