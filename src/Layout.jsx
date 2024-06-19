@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Homepage from './pages/Homepage';
 import RecruiterDashboard from './pages/Recruiter/RecruiterDashboard';
 import ApplicantDashboard from './pages/Applicant/ApplicantDashboard';
+
 const Layout = () => {
   return (
     <BrowserRouter>
@@ -15,7 +16,7 @@ const Layout = () => {
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/recruiter-dashboard" element={<RecruiterDashboard />} />
-        <Route path="/applicant-dashboard" element={<ApplicantDashboard />} />
+        <Route path="/applicant-dashboard/*" element={<ApplicantDashboard />} />
       </Routes>
       <Footer />
     </BrowserRouter>

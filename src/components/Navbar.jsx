@@ -7,7 +7,7 @@ const Navbar = () => {
     <div>
       {loginStatus === 'Guest' && (
         <>
-          <div className="navbar bg-base-100 shadow-md">
+          <div className="navbar bg-base-100 shadow-md md:px-16">
             <div className="navbar-start">
               <Link to="/">
                 <div className="btn btn-ghost">

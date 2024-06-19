@@ -1,10 +1,11 @@
-import React from 'react';
-import SearchField from './SearchField';
+import SearchField from '../../components/Applicant/SearchField';
+import JobListing from '../../components/Applicant/JobListing';
 
 const ApplicantDashboard = () => {
   return (
-    <div>
+    <div className=" bg-base-200">
       <SearchField />
+      <JobListing />
     </div>
   );
 };

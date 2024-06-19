@@ -39,9 +39,9 @@ const Login = () => {
         </Link>
 
         <p className="text-center mt-2">
-          Don't have an account yet?
+          <span>Don't have an account yet? </span>
           <a href="#" className="link link-hover font-semibold">
-            Register now!
+            <span>Register now!</span>
           </a>
         </p>
       </div>
