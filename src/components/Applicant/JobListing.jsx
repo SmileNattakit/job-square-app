@@ -4,70 +4,71 @@ import { useEffect, useState, useRef } from 'react';
 const JobListing = () => {
   const jobs = [
     {
-      id: 1,
+      jobId: 1,
       datePosted: '15 Jun, 2024',
       company: 'Google',
+      companyLogo: '/public/Company logo/google.jpg',
       companyInitial: 'G',
       title: 'Software Engineer',
-      tags: ['Full time', 'Mid level', 'On-site', 'Software development'],
+      tags: ['Full time', 'On-site', 'Software development'],
       salary: 35000,
-      location: 'Mountain View, CA',
+      location: [{ province: 'Bangkok', district: 'Chatuchak' }],
     },
     {
-      id: 2,
+      jobId: 2,
       datePosted: '12 Jun, 2024',
       company: 'Facebook',
-      companyInitial: 'f',
+      companyLogo: '/public/Company logo/google.jpg',
       title: 'Product Designer',
       tags: ['Full time', 'Senior level', 'Hybrid', 'Design'],
       salary: 30000,
-      location: 'Menlo Park, CA',
+      location: [{ province: 'Bangkok', district: 'Chatuchak' }],
     },
     {
-      id: 3,
+      jobId: 3,
       datePosted: '05 Jun, 2024',
       company: 'Microsoft',
-      companyInitial: 'M',
+      companyLogo: '/public/Company logo/google.jpg',
       title: 'Data Scientist',
-      tags: ['Full time', 'Entry level', 'On-site', 'Data science'],
+      tags: ['Full time', 'Entry level', 'On-site'],
       salary: 60000,
-      location: 'Redmond, WA',
+      location: [{ province: 'Bangkok', district: 'Chatuchak' }],
     },
     {
-      id: 4,
+      jobId: 4,
       datePosted: '28 May, 2024',
       company: 'Apple',
-      companyInitial: 'A',
+      companyLogo: '/public/Company logo/google.jpg',
       title: 'Hardware Engineer',
-      tags: ['Full time', 'Senior level', 'On-site', 'Hardware development'],
+      tags: ['Full time', 'Senior level', 'On-site'],
       salary: 35000,
-      location: 'Cupertino, CA',
+      location: [{ province: 'Bangkok', district: 'Chatuchak' }],
     },
     {
-      id: 5,
+      jobId: 5,
       datePosted: '20 May, 2024',
       company: 'Netflix',
-      companyInitial: 'N',
+      companyLogo: '/public/Company logo/google.jpg',
       title: 'Content Writer',
       tags: ['Part time', 'Mid level', 'Distant', 'Writing'],
       salary: 25000,
-      location: 'Los Gatos, CA',
+      location: [{ province: 'Bangkok', district: 'Chatuchak' }],
     },
     {
-      id: 6,
+      jobId: 6,
       datePosted: '10 May, 2024',
       company: 'Tesla',
-      companyInitial: 'T',
+      companyLogo: '/public/Company logo/google.jpg',
       title: 'Mechanical Engineer',
-      tags: ['Full time', 'Senior level', 'On-site', 'Engineering'],
+      tags: ['Full time', 'Senior level', 'On-site'],
       salary: 45000,
-      location: 'Austin, TX',
+      location: [{ province: 'Bangkok', district: 'Chatuchak' }],
     },
   ];
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 place-items-center md:px-[15%]">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 place-items-center md:px-[15%] pb-10">
       {jobs.map((job) => (
-        <JobCard key={job.id} job={job} />
+        <JobCard key={job.jobId} job={job} />
       ))}
     </div>
   );
