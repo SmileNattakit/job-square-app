@@ -2,22 +2,25 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAtom } from 'jotai';
 import { authAtom } from '../../../atoms/authAtom';
+import useLogin from '../../../hooks/useLogin'; // Import useLogin hook
 
 const Header = () => {
-  const [auth, setAuth] = useAtom(authAtom);
+  const [auth] = useAtom(authAtom);
   const { isAuthenticated, user } = auth;
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const { logout } = useLogin();
+
+  // useEffect(() => {
+  //   console.log('Current auth state in Header:', auth);
+  // }, [auth]);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    setAuth({ isAuthenticated: false, user: null });
-    navigate('/login');
+    logout();
     setIsOpen(false);
   };
-
   const toggleMenu = () => {
     setIsOpen(!isOpen);
   };
@@ -71,7 +74,11 @@ const Header = () => {
                     onClick={toggleDropdown}
                     className="text-gray-600 hover:text-blue-600 transition duration-150 ease-in-out flex items-center"
                   >
-                    {user && user.role === 'talent' ? 'Applicant' : 'Recruiter'}
+                    {user
+                      ? user.role === 'talent'
+                        ? 'Applicant'
+                        : 'Recruiter'
+                      : 'User'}
                     <svg
                       className="ml-2 -mr-1 h-5 w-5"
                       xmlns="http://www.w3.org/2000/svg"
@@ -96,13 +103,13 @@ const Header = () => {
                       >
                         {user && user.role === 'talent' ? (
                           <>
-                            <Link
+                            {/* <Link
                               to="/applicant/dashboard"
                               className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"
                               role="menuitem"
                             >
                               Dashboard
-                            </Link>
+                            </Link> */}
                             <Link
                               to="/talent/profile"
                               className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"

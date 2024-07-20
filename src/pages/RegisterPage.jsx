@@ -1,38 +1,38 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import axios from 'axios';
-import ApplicantForm from '../components/Main/Register/ApplicantForm';
-import RecruiterForm from '../components/Main/Register/RecruiterForm';
 import { FaEnvelope, FaLock } from 'react-icons/fa';
 import toast from 'react-hot-toast';
+import TalentsForm from '../components/Main/Register/TalentsForm';
+import RecruiterForm from '../components/Main/Register/RecruiterForm';
+import { guestAxios } from '../services/axiosInstances';
+import useLogin from '../hooks/useLogin';
 
 const RegisterPage = () => {
-  const [accountType, setAccountType] = useState('Applicant');
+  const [accountType, setAccountType] = useState('Talents');
   const {
     register,
     handleSubmit,
     formState: { errors },
     watch,
   } = useForm();
-  const password = watch('password'); // ติดตามค่าของ password field
+  const password = watch('password');
   const navigate = useNavigate();
+  const { login } = useLogin();
 
   const onSubmit = async (data) => {
     try {
-      const url =
-        accountType === 'Applicant'
-          ? 'http://localhost:5000/talents' // URL สำหรับ Applicant
-          : 'http://localhost:5000/recruiters'; // URL สำหรับ Recruiter
-
-      const response = await axios.post(url, data);
+      const url = accountType === 'Talents' ? '/talents' : '/recruiters';
+      const response = await guestAxios.post(url, data);
 
       if (response.status === 201) {
         toast.success('Registration successful!');
 
-        setTimeout(() => {
-          navigate('/login');
-        }, 2500);
+        // Automatic login
+        await login(data.email, data.password, accountType);
+
+        // Navigate to home page
+        navigate('/');
       } else {
         toast.error('Registration failed. Please try again.');
       }
@@ -44,7 +44,7 @@ const RegisterPage = () => {
         error.response.data &&
         error.response.data.message
       ) {
-        toast.error(error.response.data.message); // แสดงข้อความจาก backend
+        toast.error(error.response.data.message);
       } else {
         toast.error('An error occurred during registration.');
       }
@@ -64,13 +64,13 @@ const RegisterPage = () => {
         <div className="flex justify-center mb-6">
           <button
             className={`px-4 py-2 rounded-l-lg ${
-              accountType === 'Applicant'
+              accountType === 'Talents'
                 ? 'bg-blue-500 text-white'
                 : 'bg-gray-200 text-gray-700'
             }`}
-            onClick={() => setAccountType('Applicant')}
+            onClick={() => setAccountType('Talents')}
           >
-            Applicant
+            Talents
           </button>
           <button
             className={`px-4 py-2 rounded-r-lg ${
@@ -85,8 +85,8 @@ const RegisterPage = () => {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)}>
-          {accountType === 'Applicant' ? (
-            <ApplicantForm register={register} errors={errors} />
+          {accountType === 'Talents' ? (
+            <TalentsForm register={register} errors={errors} />
           ) : (
             <RecruiterForm register={register} errors={errors} />
           )}
@@ -183,16 +183,6 @@ const RegisterPage = () => {
             Create Account
           </button>
         </form>
-
-        <div className="mt-6 text-center">
-          <span className="text-gray-600">Already have an account? </span>
-          <Link
-            to="/login"
-            className="text-blue-500 hover:underline font-semibold"
-          >
-            Log in
-          </Link>
-        </div>
       </div>
     </div>
   );

@@ -4,8 +4,8 @@ import { useEffect } from 'react';
 const jobsAtom = atom([]);
 const loadingAtom = atom(true);
 import { API_URL } from '../config/api';
-console.log(API_URL);
-// สร้าง derived atom สำหรับ getJobById (อาจไม่จำเป็นต้องใช้ในกรณีนี้)
+// console.log(API_URL);
+
 const getJobByIdAtom = atom(null, async (get, set, jobId) => {
   try {
     const response = await axios.get(`${API_URL}/jobs/${jobId}`);
@@ -16,7 +16,6 @@ const getJobByIdAtom = atom(null, async (get, set, jobId) => {
   }
 });
 
-// สร้าง hook สำหรับใช้งาน jobs
 export const useJobs = () => {
   const [jobs, setJobs] = useAtom(jobsAtom);
   const [loading, setLoading] = useAtom(loadingAtom);

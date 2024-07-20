@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import useLogin from '../hook/useLogin';
+import useLogin from '../hooks/useLogin';
 import { FaEnvelope, FaLock } from 'react-icons/fa';
 
 const LoginPage = () => {

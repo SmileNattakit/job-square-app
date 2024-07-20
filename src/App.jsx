@@ -5,7 +5,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import Header from './components/Main/Header/Header';
 import Footer from './components/Main/Footer/Footer';
-import JobListingsPage from './pages/Applicant/JobListingsPage';
+import JobListingsPage from './pages/JobListingsPage';
 import TalentProfile from './pages/Applicant/TalentProfile';
 import BookmarkedJobsPage from './pages/Applicant/BookmarkedJobsPage';
 import YourApplicationsPage from './pages/Applicant/YourApplicationsPage';

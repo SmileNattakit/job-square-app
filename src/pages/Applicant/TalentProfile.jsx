@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import {
   FaUser,
   FaEnvelope,
@@ -8,64 +9,43 @@ import {
 } from 'react-icons/fa';
 
 const TalentProfile = () => {
-  const [talentData, setTalentData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phoneNumber: '',
-  });
+  const { register, handleSubmit, setValue } = useForm();
 
   const [cvFile, setCvFile] = useState(null);
 
+  const inputFields = [
+    { name: 'firstName', label: 'First Name', icon: FaUser, type: 'text' },
+    { name: 'lastName', label: 'Last Name', icon: FaUser, type: 'text' },
+    { name: 'email', label: 'Email', icon: FaEnvelope, type: 'email' },
+    { name: 'phoneNumber', label: 'Phone Number', icon: FaPhone, type: 'tel' },
+  ];
+
   useEffect(() => {
-    // Fetch talent data from the backend
-    // This is a placeholder, replace with actual API call
     const fetchTalentData = async () => {
       try {
-        // const response = await fetch('/api/talent/profile');
-        // const data = await response.json();
-        // setTalentData(data);
-        // Placeholder data
-        setTalentData({
+        const data = {
           firstName: 'John',
           lastName: 'Doe',
           email: 'john@example.com',
           phoneNumber: '+1 234 567 8900',
-        });
+        };
+        for (const field of inputFields) {
+          setValue(field.name, data[field.name]);
+        }
       } catch (error) {
         console.error('Error fetching talent data:', error);
       }
     };
-
     fetchTalentData();
-  }, []);
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setTalentData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
-  };
+  }, [setValue]);
 
   const handleFileChange = (e) => {
     setCvFile(e.target.files[0]);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    // Here you would typically send the updated data to your backend
-    console.log('Updated talent data:', talentData);
+  const onSubmit = async (data) => {
+    console.log('Updated talent data:', data);
     console.log('Uploaded CV:', cvFile);
-
-    // Placeholder for API call
-    // const formData = new FormData();
-    // Object.keys(talentData).forEach(key => formData.append(key, talentData[key]));
-    // if (cvFile) formData.append('cvFile', cvFile);
-    // await fetch('/api/talent/update-profile', {
-    //   method: 'POST',
-    //   body: formData
-    // });
   };
 
   return (
@@ -74,84 +54,31 @@ const TalentProfile = () => {
         <h2 className="text-3xl font-bold text-gray-800 mb-6">
           Talent Profile
         </h2>
-
         <div className="bg-white rounded-lg shadow-md p-6">
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit(onSubmit)}>
             <div className="grid gap-6 mb-6 md:grid-cols-2">
-              <div>
-                <label className="block mb-2 text-sm font-medium text-gray-900">
-                  First Name
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <FaUser className="text-gray-500" />
+              {inputFields.map((field) => (
+                <div key={field.name}>
+                  <label
+                    htmlFor={field.name}
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                  >
+                    {field.label}
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                      <field.icon className="text-gray-500" />
+                    </div>
+                    <input
+                      type={field.type}
+                      id={field.name}
+                      {...register(field.name, { required: true })}
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5"
+                    />
                   </div>
-                  <input
-                    type="text"
-                    name="firstName"
-                    value={talentData.firstName}
-                    onChange={handleInputChange}
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5"
-                    required
-                  />
                 </div>
-              </div>
-              <div>
-                <label className="block mb-2 text-sm font-medium text-gray-900">
-                  Last Name
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <FaUser className="text-gray-500" />
-                  </div>
-                  <input
-                    type="text"
-                    name="lastName"
-                    value={talentData.lastName}
-                    onChange={handleInputChange}
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5"
-                    required
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block mb-2 text-sm font-medium text-gray-900">
-                  Email
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <FaEnvelope className="text-gray-500" />
-                  </div>
-                  <input
-                    type="email"
-                    name="email"
-                    value={talentData.email}
-                    onChange={handleInputChange}
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5"
-                    required
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block mb-2 text-sm font-medium text-gray-900">
-                  Phone Number
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <FaPhone className="text-gray-500" />
-                  </div>
-                  <input
-                    type="tel"
-                    name="phoneNumber"
-                    value={talentData.phoneNumber}
-                    onChange={handleInputChange}
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5"
-                    required
-                  />
-                </div>
-              </div>
+              ))}
             </div>
-
             <div className="mb-6">
               <label className="block mb-2 text-sm font-medium text-gray-900">
                 Upload CV
@@ -183,7 +110,6 @@ const TalentProfile = () => {
                 </p>
               )}
             </div>
-
             <button
               type="submit"
               className="text-white bg-blue-500 hover:bg-blue-600 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center"

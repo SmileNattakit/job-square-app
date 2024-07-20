@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useJobs } from '../../atoms/jobAtom';
-
+import { useJobs } from '../atoms/jobAtom';
 import {
   FaSearch,
   FaMapMarkerAlt,
@@ -63,7 +62,7 @@ const JobListingsPage = () => {
     );
   }
 
-  console.log(jobs);
+  // console.log(jobs);
   return (
     <div className="bg-gray-100 min-h-screen">
       <main className="container mx-auto px-4 py-8">
