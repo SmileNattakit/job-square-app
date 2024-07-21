@@ -23,7 +23,10 @@ function useLogin() {
             user: {
               userId: decodedToken.userId,
               role: decodedToken.role,
-              firstname: decodedToken.firstname,
+              name:
+                decodedToken.role === 'talent'
+                  ? decodedToken.firstName
+                  : decodedToken.companyName,
             },
           });
         } else {
@@ -38,10 +41,6 @@ function useLogin() {
       }
     }
   }, [setAuth]);
-
-  // useEffect(() => {
-  //   console.log('Current auth state:', auth);
-  // }, [auth]);
 
   const login = async (email, password, accountType) => {
     setIsLoading(true);
@@ -62,7 +61,10 @@ function useLogin() {
           user: {
             userId: decodedToken.userId,
             role: decodedToken.role,
-            firstname: decodedToken.firstname,
+            name:
+              decodedToken.role === 'talent'
+                ? decodedToken.firstName
+                : decodedToken.companyName,
           },
         };
 

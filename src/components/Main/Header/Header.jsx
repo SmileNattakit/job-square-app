@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAtom } from 'jotai';
 import { authAtom } from '../../../atoms/authAtom';
-import useLogin from '../../../hooks/useLogin'; // Import useLogin hook
+import useLogin from '../../../hooks/useLogin';
 
 const Header = () => {
   const [auth] = useAtom(authAtom);
@@ -13,14 +13,11 @@ const Header = () => {
   const dropdownRef = useRef(null);
   const { logout } = useLogin();
 
-  // useEffect(() => {
-  //   console.log('Current auth state in Header:', auth);
-  // }, [auth]);
-
   const handleLogout = () => {
     logout();
     setIsOpen(false);
   };
+
   const toggleMenu = () => {
     setIsOpen(!isOpen);
   };
@@ -74,11 +71,7 @@ const Header = () => {
                     onClick={toggleDropdown}
                     className="text-gray-600 hover:text-blue-600 transition duration-150 ease-in-out flex items-center"
                   >
-                    {user
-                      ? user.role === 'talent'
-                        ? 'Applicant'
-                        : 'Recruiter'
-                      : 'User'}
+                    {user ? user.name : 'User'}
                     <svg
                       className="ml-2 -mr-1 h-5 w-5"
                       xmlns="http://www.w3.org/2000/svg"
@@ -102,22 +95,13 @@ const Header = () => {
                         aria-labelledby="options-menu"
                       >
                         {user && user.role === 'talent' ? (
-                          <>
-                            {/* <Link
-                              to="/applicant/dashboard"
-                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"
-                              role="menuitem"
-                            >
-                              Dashboard
-                            </Link> */}
-                            <Link
-                              to="/talent/profile"
-                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"
-                              role="menuitem"
-                            >
-                              Profile
-                            </Link>
-                          </>
+                          <Link
+                            to="/talent/profile"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                            role="menuitem"
+                          >
+                            Profile
+                          </Link>
                         ) : (
                           <>
                             <Link
@@ -149,6 +133,7 @@ const Header = () => {
               </>
             )}
           </div>
+          {/* Mobile menu button */}
           <div className="md:hidden">
             <button
               onClick={toggleMenu}
@@ -179,68 +164,57 @@ const Header = () => {
             </button>
           </div>
         </div>
+        {/* Mobile menu */}
         {isOpen && (
           <div className="md:hidden mt-2 pb-3 space-y-1">
-            {isOpen && (
-              <div className="md:hidden mt-2 pb-3 space-y-1">
-                {!isAuthenticated ? (
+            {!isAuthenticated ? (
+              <>
+                <Link
+                  to="/login"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition duration-150 ease-in-out"
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/register"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-white bg-blue-600 hover:bg-blue-700 transition duration-150 ease-in-out"
+                >
+                  Sign Up
+                </Link>
+              </>
+            ) : (
+              <>
+                {user && user.role === 'talent' && (
+                  <Link
+                    to="/talent/profile"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition duration-150 ease-in-out"
+                  >
+                    Profile
+                  </Link>
+                )}
+                {user && user.role === 'recruiter' && (
                   <>
                     <Link
-                      to="/login"
+                      to="/recruiter/dashboard"
                       className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition duration-150 ease-in-out"
                     >
-                      Login
+                      Dashboard
                     </Link>
                     <Link
-                      to="/register"
-                      className="block px-3 py-2 rounded-md text-base font-medium text-white bg-blue-600 hover:bg-blue-700 transition duration-150 ease-in-out"
+                      to="/recruiter/post-job"
+                      className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition duration-150 ease-in-out"
                     >
-                      Sign Up
+                      Post a Job
                     </Link>
                   </>
-                ) : (
-                  <>
-                    {user && user.role === 'talent' && (
-                      <>
-                        <Link
-                          to="/applicant/dashboard"
-                          className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition duration-150 ease-in-out"
-                        >
-                          Dashboard
-                        </Link>
-                        <Link
-                          to="/applicant/profile"
-                          className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition duration-150 ease-in-out"
-                        >
-                          Profile
-                        </Link>
-                      </>
-                    )}
-                    {user && user.role === 'recruiter' && (
-                      <>
-                        <Link
-                          to="/recruiter/dashboard"
-                          className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition duration-150 ease-in-out"
-                        >
-                          Dashboard
-                        </Link>
-                        <Link
-                          to="/recruiter/post-job"
-                          className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition duration-150 ease-in-out"
-                        >
-                          Post a Job
-                        </Link>
-                      </>
-                    )}
-                    <button
-                      onClick={handleLogout}
-                      className="w-full text-left px-3 py-2 rounded-md text-base font-medium text-white bg-red-500 hover:bg-red-600 transition duration-150 ease-in-out"
-                    >
-                      Logout
-                    </button>
-                  </>
                 )}
-              </div>
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left px-3 py-2 rounded-md text-base font-medium text-white bg-red-500 hover:bg-red-600 transition duration-150 ease-in-out"
+                >
+                  Logout
+                </button>
+              </>
             )}
           </div>
         )}
