@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   FaBuilding,
@@ -7,6 +7,7 @@ import {
   FaUsers,
   FaMapMarkerAlt,
   FaPhone,
+  FaTrash,
 } from 'react-icons/fa';
 import { authenticatedAxios } from '../../services/axiosInstances';
 import { useAtom } from 'jotai';
@@ -17,8 +18,8 @@ const CompanyProfile = () => {
   const { register, handleSubmit, setValue, watch } = useForm();
   const [bannerFile, setBannerFile] = useState(null);
   const [logoFile, setLogoFile] = useState(null);
-  const [existingBannerUrl, setExistingBannerUrl] = useState(null);
-  const [existingLogoUrl, setExistingLogoUrl] = useState(null);
+  const [bannerPreview, setBannerPreview] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(null);
   const [auth] = useAtom(authAtom);
   const [isLoading, setIsLoading] = useState(false);
   const [initialData, setInitialData] = useState({});
@@ -43,8 +44,8 @@ const CompanyProfile = () => {
         setValue('location', data.location);
         setValue('description', data.description);
         setValue('phoneNumber', data.phoneNumber);
-        setExistingBannerUrl(data.banner);
-        setExistingLogoUrl(data.logo);
+        setBannerPreview(data.banner);
+        setLogoPreview(data.logo);
       } catch (error) {
         console.error('Error fetching company data:', error);
         toast.error('Failed to load profile data');
@@ -53,10 +54,15 @@ const CompanyProfile = () => {
     if (auth.user?.userId) fetchCompanyData();
   }, [auth.user, setValue]);
 
-  const handleFileChange = (e, setFile) => {
+  const handleFileChange = (e, setFile, setPreview) => {
     const file = e.target.files[0];
     if (file && file.size <= 5 * 1024 * 1024) {
       setFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
     } else {
       toast.error('File size exceeds 5MB limit');
     }
@@ -64,6 +70,7 @@ const CompanyProfile = () => {
 
   const onSubmit = async (data) => {
     setIsLoading(true);
+    const toastId = toast.loading('Updating profile...');
     try {
       const formData = new FormData();
       Object.entries(data).forEach(([key, value]) => {
@@ -72,26 +79,10 @@ const CompanyProfile = () => {
 
       if (bannerFile) {
         formData.append('banner', bannerFile);
-      } else if (existingBannerUrl === null && initialData.banner) {
-        formData.append('removeBanner', 'true');
       }
 
       if (logoFile) {
         formData.append('logo', logoFile);
-      } else if (existingLogoUrl === null && initialData.logo) {
-        formData.append('removeLogo', 'true');
-      }
-
-      if (
-        [...formData.entries()].length === 0 &&
-        !bannerFile &&
-        !logoFile &&
-        existingBannerUrl !== null &&
-        existingLogoUrl !== null
-      ) {
-        toast.info('No changes to update');
-        setIsLoading(false);
-        return;
       }
 
       const { data: responseData } = await authenticatedAxios.patch(
@@ -100,18 +91,37 @@ const CompanyProfile = () => {
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );
 
-      toast.success('Profile updated successfully');
-      setExistingBannerUrl(responseData.recruiter.banner);
-      setExistingLogoUrl(responseData.recruiter.logo);
+      toast.update(toastId, {
+        render: 'Profile updated successfully',
+        type: 'success',
+        isLoading: false,
+        autoClose: 5000,
+      });
+      setBannerPreview(responseData.banner);
+      setLogoPreview(responseData.logo);
       setBannerFile(null);
       setLogoFile(null);
-      setInitialData(responseData.recruiter);
+      setInitialData(responseData);
     } catch (error) {
       console.error('Error updating profile:', error);
-      toast.error('Failed to update profile');
+      toast.update(toastId, {
+        render: 'Failed to update profile',
+        type: 'error',
+        isLoading: false,
+        autoClose: 5000,
+      });
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const isFormChanged = () => {
+    const formData = watch();
+    return (
+      Object.keys(formData).some((key) => formData[key] !== initialData[key]) ||
+      bannerFile ||
+      logoFile
+    );
   };
 
   return (
@@ -125,12 +135,24 @@ const CompanyProfile = () => {
           className="bg-white rounded-lg shadow-md overflow-hidden"
         >
           <div className="relative h-48 bg-gray-200">
-            {existingBannerUrl ? (
-              <img
-                src={existingBannerUrl}
-                alt="Company Banner"
-                className="w-full h-full object-cover"
-              />
+            {bannerPreview ? (
+              <>
+                <img
+                  src={bannerPreview}
+                  alt="Company Banner"
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBannerPreview(null);
+                    setBannerFile(null);
+                  }}
+                  className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full"
+                >
+                  <FaTrash />
+                </button>
+              </>
             ) : (
               <div className="absolute inset-0 flex items-center justify-center">
                 <label className="cursor-pointer bg-white p-2 rounded-full shadow-md">
@@ -138,7 +160,9 @@ const CompanyProfile = () => {
                   <input
                     type="file"
                     className="hidden"
-                    onChange={(e) => handleFileChange(e, setBannerFile)}
+                    onChange={(e) =>
+                      handleFileChange(e, setBannerFile, setBannerPreview)
+                    }
                     accept="image/*"
                   />
                 </label>
@@ -149,12 +173,24 @@ const CompanyProfile = () => {
           <div className="p-6">
             <div className="flex items-center mb-6">
               <div className="relative w-24 h-24 mr-4">
-                {existingLogoUrl ? (
-                  <img
-                    src={existingLogoUrl}
-                    alt="Company Logo"
-                    className="w-full h-full object-cover rounded-full"
-                  />
+                {logoPreview ? (
+                  <>
+                    <img
+                      src={logoPreview}
+                      alt="Company Logo"
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLogoPreview(null);
+                        setLogoFile(null);
+                      }}
+                      className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
+                    >
+                      <FaTrash size={12} />
+                    </button>
+                  </>
                 ) : (
                   <div className="w-full h-full bg-gray-200 rounded-full flex items-center justify-center">
                     <label className="cursor-pointer">
@@ -162,7 +198,9 @@ const CompanyProfile = () => {
                       <input
                         type="file"
                         className="hidden"
-                        onChange={(e) => handleFileChange(e, setLogoFile)}
+                        onChange={(e) =>
+                          handleFileChange(e, setLogoFile, setLogoPreview)
+                        }
                         accept="image/*"
                       />
                     </label>
@@ -199,7 +237,7 @@ const CompanyProfile = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Company Address
+                  Company Location
                 </label>
                 <div className="relative">
                   <FaMapMarkerAlt className="absolute top-3 left-3 text-gray-400" />
@@ -236,7 +274,7 @@ const CompanyProfile = () => {
                   <input
                     {...register('phoneNumber')}
                     className="pl-10 w-full p-2 border rounded-md"
-                    placeholder="e.g. +66 2 123 4567"
+                    placeholder="e.g. 02-123-4567"
                   />
                 </div>
               </div>
@@ -244,22 +282,22 @@ const CompanyProfile = () => {
 
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Description
+                Company Description
               </label>
               <textarea
                 {...register('description')}
                 rows={4}
                 className="w-full p-2 border rounded-md"
-                placeholder="Company description..."
+                placeholder="Describe your company..."
               ></textarea>
             </div>
 
             <button
               type="submit"
-              className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition duration-300"
-              disabled={isLoading}
+              className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              disabled={isLoading || !isFormChanged()}
             >
-              {isLoading ? 'Saving...' : 'Save Changes'}
+              {isLoading ? 'Updating...' : 'Update Profile'}
             </button>
           </div>
         </form>

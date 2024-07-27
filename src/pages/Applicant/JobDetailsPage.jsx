@@ -70,11 +70,11 @@ const JobDetailPage = () => {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      toast.success('ส่งใบสมัครเรียบร้อยแล้ว!');
+      toast.success('Application submitted successfully!');
       setIsModalOpen(false);
     } catch (error) {
       console.error('Error submitting application:', error);
-      toast.error('เกิดข้อผิดพลาดในการส่งใบสมัคร');
+      toast.error('An error occurred while submitting the application');
     } finally {
       setIsSubmitting(false);
     }
@@ -95,9 +95,16 @@ const JobDetailPage = () => {
           to="/job-listings"
           className="text-blue-600 hover:text-blue-800 flex items-center mb-6"
         >
-          <FaChevronLeft className="mr-2" /> กลับไปยังรายการงาน
+          <FaChevronLeft className="mr-2" /> Back to Job Listings
         </Link>
         <div className="bg-white rounded-lg shadow-lg p-8">
+          {' '}
+          {job.recruiterId.banner && (
+            <div
+              className="w-full h-64 bg-cover bg-center"
+              style={{ backgroundImage: `url(${job.recruiterId.banner})` }}
+            ></div>
+          )}
           <div className="flex justify-between items-start mb-6">
             <div className="flex items-center">
               <img
@@ -126,7 +133,7 @@ const JobDetailPage = () => {
               onClick={handleApply}
               className="bg-blue-500 text-white px-6 py-3 rounded-full hover:bg-blue-700 transition duration-300"
             >
-              สมัครงาน
+              Apply Now
             </button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -134,19 +141,19 @@ const JobDetailPage = () => {
             <InfoItem icon={FaBriefcase} text={job.type} />
             <InfoItem
               icon={FaMoneyBillWave}
-              text={`${job.salary.toLocaleString()} บาท`}
+              text={`${job.salary.toLocaleString()} THB`}
             />
             <InfoItem icon={FaTag} text={job.category} />
           </div>
           <div className="bg-blue-50 p-4 rounded-lg mb-8">
             <h2 className="text-xl font-semibold text-blue-800 mb-4">
-              รายละเอียดงาน
+              Job Description
             </h2>
             <p className="text-gray-700">{job.description}</p>
           </div>
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-blue-800 mb-4">
-              คุณสมบัติที่ต้องการ
+              Requirements
             </h2>
             <ul className="list-disc list-inside text-gray-700">
               {job.requirements.map((req, index) => (
@@ -158,7 +165,7 @@ const JobDetailPage = () => {
           </div>
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-blue-800 mb-4">
-              ทักษะที่ต้องการ
+              Required Skills
             </h2>
             <div className="flex flex-wrap gap-2">
               {job.tags.map((tag, index) => (
@@ -174,7 +181,7 @@ const JobDetailPage = () => {
           <div className="flex justify-between items-center">
             <div className="text-gray-500 text-sm flex items-center">
               <FaClock className="mr-2" />
-              วันที่ลงประกาศ: {new Date(job.posted).toLocaleDateString()}
+              Posted on: {new Date(job.posted).toLocaleDateString()}
             </div>
           </div>
         </div>
@@ -185,7 +192,7 @@ const JobDetailPage = () => {
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold text-blue-800">
-                สมัครงาน: {job.title}
+                Apply for: {job.title}
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -197,20 +204,21 @@ const JobDetailPage = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-blue-700 mb-2">
-                  ทำไมคุณถึงสนใจทำงานที่ {job.recruiterId.companyName}
+                  Why are you interested in working at{' '}
+                  {job.recruiterId.companyName}?
                 </label>
                 <textarea
                   value={interest}
                   onChange={(e) => setInterest(e.target.value)}
                   className="w-full p-3 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   rows="4"
-                  placeholder={`กล่าวถึงสิ่งที่คุณสนใจเกี่ยวกับ ${job.recruiterId.companyName} ทำไมคุณถึงเป็นผู้สมัครที่เหมาะสม?`}
+                  placeholder={`Describe your interest in ${job.recruiterId.companyName}. Why are you a good fit for this role?`}
                   required
                 ></textarea>
               </div>
               <div>
                 <p className="text-sm font-semibold text-blue-700 mb-2">
-                  ส่ง CV ที่อัปเดตแล้ว
+                  Submit an updated CV
                 </p>
                 <div className="flex items-center gap-4">
                   <label className="flex items-center">
@@ -220,7 +228,7 @@ const JobDetailPage = () => {
                       onChange={() => setUseCurrentCV(true)}
                       className="mr-2 text-blue-600"
                     />
-                    ใช้ CV ปัจจุบัน
+                    Use current CV
                   </label>
                   <label className="flex items-center">
                     <input
@@ -229,7 +237,7 @@ const JobDetailPage = () => {
                       onChange={() => setUseCurrentCV(false)}
                       className="mr-2 text-blue-600"
                     />
-                    อัปโหลด CV ใหม่
+                    Upload new CV
                   </label>
                 </div>
               </div>
@@ -240,7 +248,7 @@ const JobDetailPage = () => {
                     onClick={() => document.getElementById('cv-upload').click()}
                     className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center hover:bg-blue-600 transition duration-300"
                   >
-                    <FaUpload className="mr-2" /> เลือกไฟล์
+                    <FaUpload className="mr-2" /> Choose File
                   </button>
                   <input
                     id="cv-upload"
@@ -250,23 +258,23 @@ const JobDetailPage = () => {
                     accept=".pdf"
                   />
                   <p className="text-sm text-blue-500 mt-2">
-                    {file ? file.name : 'ยังไม่ได้เลือกไฟล์'}
+                    {file ? file.name : 'No file chosen'}
                   </p>
                   <p className="text-xs text-blue-400">
-                    เฉพาะไฟล์ PDF ขนาดไม่เกิน 5MB
+                    PDF files only, max 5MB
                   </p>
                 </div>
               )}
               <div>
                 <label className="block text-sm font-semibold text-blue-700 mb-2">
-                  Cover Letter (ไม่จำเป็น)
+                  Cover Letter (Optional)
                 </label>
                 <textarea
                   value={coverLetter}
                   onChange={(e) => setCoverLetter(e.target.value)}
                   className="w-full p-3 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   rows="6"
-                  placeholder="เพิ่ม Cover Letter ของคุณที่นี่"
+                  placeholder="Add your cover letter here"
                 ></textarea>
               </div>
               <button
@@ -274,7 +282,9 @@ const JobDetailPage = () => {
                 className="bg-blue-600 text-white px-6 py-3 rounded-full w-full hover:bg-blue-700 transition duration-300 text-lg font-semibold"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? 'กำลังส่งใบสมัคร...' : 'ส่งใบสมัคร'}
+                {isSubmitting
+                  ? 'Submitting Application...'
+                  : 'Submit Application'}
               </button>
             </form>
           </div>
