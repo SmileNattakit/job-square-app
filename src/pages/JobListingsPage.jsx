@@ -144,16 +144,16 @@ const JobListingsPage = () => {
                   {job.title}
                 </h3>
                 <div className="flex items-center mb-4">
-                  {job.logo && (
+                  {job.recruiterId?.logo && (
                     <img
                       src={job.recruiterId.logo}
-                      alt={`${job.recruiterId.companyName} logo`}
+                      alt={`${job.recruiterId?.companyName} logo`}
                       className="w-8 h-8 mr-2"
                     />
                   )}
                   <p className="text-gray-600 flex items-center">
-                    <FaBriefcase className="mr-2 text-blue-500" />{' '}
-                    {job.recruiterId.companyName}
+                    <FaBriefcase className="mr-2 text-blue-500" />
+                    {job.recruiterId?.companyName}
                   </p>
                 </div>
                 {job.tags && job.tags.length > 0 && (
@@ -169,7 +169,7 @@ const JobListingsPage = () => {
                   </div>
                 )}
                 <p className="text-gray-500 flex items-center mb-2">
-                  <FaMapMarkerAlt className="mr-2 text-blue-500" />{' '}
+                  <FaMapMarkerAlt className="mr-2 text-blue-500" />
                   {job.location}
                 </p>
                 <p className="text-gray-500 flex items-center mb-2">

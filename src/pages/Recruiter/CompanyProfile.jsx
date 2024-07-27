@@ -3,10 +3,10 @@ import { useForm } from 'react-hook-form';
 import {
   FaBuilding,
   FaEnvelope,
-  FaGlobe,
   FaUpload,
-  FaTrash,
-  FaImage,
+  FaUsers,
+  FaMapMarkerAlt,
+  FaPhone,
 } from 'react-icons/fa';
 import { authenticatedAxios } from '../../services/axiosInstances';
 import { useAtom } from 'jotai';
@@ -15,84 +15,60 @@ import { toast } from 'react-toastify';
 
 const CompanyProfile = () => {
   const { register, handleSubmit, setValue, watch } = useForm();
-  const [logoFile, setLogoFile] = useState(null);
   const [bannerFile, setBannerFile] = useState(null);
-  const [existingLogoUrl, setExistingLogoUrl] = useState(null);
+  const [logoFile, setLogoFile] = useState(null);
   const [existingBannerUrl, setExistingBannerUrl] = useState(null);
+  const [existingLogoUrl, setExistingLogoUrl] = useState(null);
   const [auth] = useAtom(authAtom);
   const [isLoading, setIsLoading] = useState(false);
   const [initialData, setInitialData] = useState({});
 
-  const inputFields = [
-    {
-      name: 'companyName',
-      label: 'Company Name',
-      icon: FaBuilding,
-      type: 'text',
-    },
-    { name: 'email', label: 'Email', icon: FaEnvelope, type: 'email' },
-    { name: 'website', label: 'Website', icon: FaGlobe, type: 'url' },
+  const companySizeOptions = [
+    { value: '1-50', label: '1-50 employees' },
+    { value: '51-100', label: '51-100 employees' },
+    { value: '101-1000', label: '101-1000 employees' },
+    { value: '1000+', label: '1000+ employees' },
   ];
 
   useEffect(() => {
     const fetchCompanyData = async () => {
       try {
-        const response = await authenticatedAxios.get(
+        const { data } = await authenticatedAxios.get(
           `/recruiters/${auth.user.userId}`
         );
-        const data = response.data;
         setInitialData(data);
-        for (const field of inputFields) {
-          setValue(field.name, data[field.name]);
-        }
+        setValue('companyName', data.companyName);
+        setValue('email', data.email);
+        setValue('companySize', data.companySize);
+        setValue('location', data.location);
         setValue('description', data.description);
-        if (data.logo) {
-          setExistingLogoUrl(data.logo);
-        }
-        if (data.banner) {
-          setExistingBannerUrl(data.banner);
-        }
+        setValue('phoneNumber', data.phoneNumber);
+        setExistingBannerUrl(data.banner);
+        setExistingLogoUrl(data.logo);
       } catch (error) {
         console.error('Error fetching company data:', error);
         toast.error('Failed to load profile data');
       }
     };
-    if (auth.user && auth.user.userId) {
-      fetchCompanyData();
-    }
+    if (auth.user?.userId) fetchCompanyData();
   }, [auth.user, setValue]);
 
   const handleFileChange = (e, setFile) => {
     const file = e.target.files[0];
     if (file && file.size <= 5 * 1024 * 1024) {
-      // 5MB limit
       setFile(file);
     } else {
       toast.error('File size exceeds 5MB limit');
     }
   };
 
-  const handleRemoveExistingFile = (setExistingUrl) => {
-    setExistingUrl(null);
-  };
-
   const onSubmit = async (data) => {
     setIsLoading(true);
     try {
       const formData = new FormData();
-
-      // Only append fields that have changed
-      Object.keys(data).forEach((key) => {
-        if (data[key] !== initialData[key]) {
-          formData.append(key, data[key]);
-        }
+      Object.entries(data).forEach(([key, value]) => {
+        if (value !== initialData[key]) formData.append(key, value);
       });
-
-      if (logoFile) {
-        formData.append('logo', logoFile);
-      } else if (existingLogoUrl === null && initialData.logo) {
-        formData.append('removeLogo', 'true');
-      }
 
       if (bannerFile) {
         formData.append('banner', bannerFile);
@@ -100,44 +76,36 @@ const CompanyProfile = () => {
         formData.append('removeBanner', 'true');
       }
 
-      // Only send request if there are changes
+      if (logoFile) {
+        formData.append('logo', logoFile);
+      } else if (existingLogoUrl === null && initialData.logo) {
+        formData.append('removeLogo', 'true');
+      }
+
       if (
-        formData.entries().next().done &&
-        !logoFile &&
+        [...formData.entries()].length === 0 &&
         !bannerFile &&
-        existingLogoUrl !== null &&
-        existingBannerUrl !== null
+        !logoFile &&
+        existingBannerUrl !== null &&
+        existingLogoUrl !== null
       ) {
         toast.info('No changes to update');
         setIsLoading(false);
         return;
       }
 
-      const response = await authenticatedAxios.patch(
+      const { data: responseData } = await authenticatedAxios.patch(
         `/recruiters/${auth.user.userId}`,
         formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
+        { headers: { 'Content-Type': 'multipart/form-data' } }
       );
 
-      console.log('Profile updated successfully:', response.data);
       toast.success('Profile updated successfully');
-      if (response.data.recruiter.logo) {
-        setExistingLogoUrl(response.data.recruiter.logo);
-      } else {
-        setExistingLogoUrl(null);
-      }
-      if (response.data.recruiter.banner) {
-        setExistingBannerUrl(response.data.recruiter.banner);
-      } else {
-        setExistingBannerUrl(null);
-      }
-      setLogoFile(null);
+      setExistingBannerUrl(responseData.recruiter.banner);
+      setExistingLogoUrl(responseData.recruiter.logo);
       setBannerFile(null);
-      setInitialData(response.data.recruiter);
+      setLogoFile(null);
+      setInitialData(responseData.recruiter);
     } catch (error) {
       console.error('Error updating profile:', error);
       toast.error('Failed to update profile');
@@ -152,152 +120,149 @@ const CompanyProfile = () => {
         <h2 className="text-3xl font-bold text-gray-800 mb-6">
           Company Profile
         </h2>
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="grid gap-6 mb-6 md:grid-cols-2">
-              {inputFields.map((field) => (
-                <div key={field.name}>
-                  <label
-                    htmlFor={field.name}
-                    className="block mb-2 text-sm font-medium text-gray-900"
-                  >
-                    {field.label}
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                      <field.icon className="text-gray-500" />
-                    </div>
-                    <input
-                      type={field.type}
-                      id={field.name}
-                      {...register(field.name, { required: true })}
-                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5"
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="mb-6">
-              <label
-                htmlFor="description"
-                className="block mb-2 text-sm font-medium text-gray-900"
-              >
-                Company Description
-              </label>
-              <textarea
-                id="description"
-                {...register('description')}
-                rows={4}
-                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-              ></textarea>
-            </div>
-            <div className="mb-6">
-              <label className="block mb-2 text-sm font-medium text-gray-900">
-                Company Logo
-              </label>
-              {existingLogoUrl ? (
-                <div className="flex items-center space-x-2">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="bg-white rounded-lg shadow-md overflow-hidden"
+        >
+          <div className="relative h-48 bg-gray-200">
+            {existingBannerUrl ? (
+              <img
+                src={existingBannerUrl}
+                alt="Company Banner"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <label className="cursor-pointer bg-white p-2 rounded-full shadow-md">
+                  <FaUpload className="text-gray-500" />
+                  <input
+                    type="file"
+                    className="hidden"
+                    onChange={(e) => handleFileChange(e, setBannerFile)}
+                    accept="image/*"
+                  />
+                </label>
+              </div>
+            )}
+          </div>
+
+          <div className="p-6">
+            <div className="flex items-center mb-6">
+              <div className="relative w-24 h-24 mr-4">
+                {existingLogoUrl ? (
                   <img
                     src={existingLogoUrl}
                     alt="Company Logo"
-                    className="w-20 h-20 object-cover"
+                    className="w-full h-full object-cover rounded-full"
                   />
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveExistingFile(setExistingLogoUrl)}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    <FaTrash />
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center w-full">
-                  <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <FaUpload className="w-10 h-10 mb-3 text-gray-400" />
-                      <p className="mb-2 text-sm text-gray-500">
-                        <span className="font-semibold">Click to upload</span>{' '}
-                        or drag and drop
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        PNG, JPG, GIF (MAX. 5MB)
-                      </p>
-                    </div>
-                    <input
-                      type="file"
-                      className="hidden"
-                      onChange={(e) => handleFileChange(e, setLogoFile)}
-                      accept="image/*"
-                    />
-                  </label>
-                </div>
-              )}
-              {logoFile && (
-                <p className="mt-2 text-sm text-gray-500">
-                  <FaImage className="inline mr-2" />
-                  {logoFile.name}
-                </p>
-              )}
+                ) : (
+                  <div className="w-full h-full bg-gray-200 rounded-full flex items-center justify-center">
+                    <label className="cursor-pointer">
+                      <FaUpload className="text-gray-500" />
+                      <input
+                        type="file"
+                        className="hidden"
+                        onChange={(e) => handleFileChange(e, setLogoFile)}
+                        accept="image/*"
+                      />
+                    </label>
+                  </div>
+                )}
+              </div>
+              <div>
+                <input
+                  {...register('companyName')}
+                  className="text-2xl font-bold mb-1 bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none"
+                  placeholder="Company Name"
+                />
+              </div>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Company Size
+                </label>
+                <div className="relative">
+                  <FaUsers className="absolute top-3 left-3 text-gray-400" />
+                  <select
+                    {...register('companySize')}
+                    className="pl-10 w-full p-2 border rounded-md appearance-none bg-white"
+                  >
+                    {companySizeOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Location
+                </label>
+                <div className="relative">
+                  <FaMapMarkerAlt className="absolute top-3 left-3 text-gray-400" />
+                  <input
+                    {...register('location')}
+                    className="pl-10 w-full p-2 border rounded-md"
+                    placeholder="e.g. Bangkok, Thailand"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <div className="relative">
+                  <FaEnvelope className="absolute top-3 left-3 text-gray-400" />
+                  <input
+                    {...register('email')}
+                    className="pl-10 w-full p-2 border rounded-md bg-gray-100 cursor-not-allowed"
+                    readOnly
+                    disabled
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone Number
+                </label>
+                <div className="relative">
+                  <FaPhone className="absolute top-3 left-3 text-gray-400" />
+                  <input
+                    {...register('phoneNumber')}
+                    className="pl-10 w-full p-2 border rounded-md"
+                    placeholder="e.g. +66 2 123 4567"
+                  />
+                </div>
+              </div>
+            </div>
+
             <div className="mb-6">
-              <label className="block mb-2 text-sm font-medium text-gray-900">
-                Company Banner
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Description
               </label>
-              {existingBannerUrl ? (
-                <div className="flex items-center space-x-2">
-                  <img
-                    src={existingBannerUrl}
-                    alt="Company Banner"
-                    className="w-full h-32 object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleRemoveExistingFile(setExistingBannerUrl)
-                    }
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    <FaTrash />
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center w-full">
-                  <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <FaUpload className="w-10 h-10 mb-3 text-gray-400" />
-                      <p className="mb-2 text-sm text-gray-500">
-                        <span className="font-semibold">Click to upload</span>{' '}
-                        or drag and drop
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        PNG, JPG, GIF (MAX. 5MB)
-                      </p>
-                    </div>
-                    <input
-                      type="file"
-                      className="hidden"
-                      onChange={(e) => handleFileChange(e, setBannerFile)}
-                      accept="image/*"
-                    />
-                  </label>
-                </div>
-              )}
-              {bannerFile && (
-                <p className="mt-2 text-sm text-gray-500">
-                  <FaImage className="inline mr-2" />
-                  {bannerFile.name}
-                </p>
-              )}
+              <textarea
+                {...register('description')}
+                rows={4}
+                className="w-full p-2 border rounded-md"
+                placeholder="Company description..."
+              ></textarea>
             </div>
+
             <button
               type="submit"
-              className="text-white bg-blue-500 hover:bg-blue-600 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center"
+              className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition duration-300"
               disabled={isLoading}
             >
               {isLoading ? 'Saving...' : 'Save Changes'}
             </button>
-          </form>
-        </div>
+          </div>
+        </form>
       </main>
     </div>
   );

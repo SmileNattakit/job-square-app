@@ -1,46 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FaEdit, FaTrash, FaUsers, FaPlus } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import JobForm from '../../components/Recruiter/JobForm';
-
-// Mock data
-const mockJobs = [
-  {
-    _id: '668c372433229c80e105bf47',
-    title: 'Full Stack Developer',
-    recruiterId: '668c35e97ece7cebb85b6f5d',
-    location: 'Bangkok, Thailand',
-    type: 'Full-time',
-    salary: 80000,
-    category: 'Software',
-    tags: ['JavaScript', 'React', 'Node.js', 'MongoDB'],
-    description:
-      'We are seeking a talented Full Stack Developer to join our dynamic team. The ideal candidate will have experience with both front-end and back-end development, and a passion for creating efficient, scalable web applications.',
-    requirements: [
-      '3+ years of experience in full stack development',
-      'Proficiency in JavaScript, React, Node.js, and MongoDB',
-      'Experience with RESTful API design and implementation',
-      'Strong problem-solving skills and attention to detail',
-    ],
-    posted: '2024-07-08T18:59:48.159Z',
-    applicantsCount: 5,
-  },
-  // Add more mock jobs here if needed
-];
+import { authenticatedAxios } from '../../services/axiosInstances';
+import { useAtom } from 'jotai';
+import { authAtom } from '../../atoms/authAtom';
+import Swal from 'sweetalert2';
 
 const RecruiterDashboard = () => {
   const [jobs, setJobs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showJobForm, setShowJobForm] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
+  const [authState] = useAtom(authAtom);
+
+  const recruiterId = authState.user ? authState.user.userId : null;
+
+  const fetchJobs = useCallback(async () => {
+    if (!recruiterId) return;
+    try {
+      setIsLoading(true);
+      const response = await authenticatedAxios.get(
+        `/jobs/recruiter/${recruiterId}/jobs`
+      );
+      setJobs(response.data);
+    } catch (error) {
+      toast.error('Failed to load jobs');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [recruiterId]);
 
   useEffect(() => {
-    // Simulate API call with setTimeout
-    setTimeout(() => {
-      setJobs(mockJobs);
-      setIsLoading(false);
-    }, 1000);
-  }, []);
+    fetchJobs();
+  }, [fetchJobs]);
 
   const handleCreateJob = () => {
     setEditingJob(null);
@@ -52,34 +45,60 @@ const RecruiterDashboard = () => {
     setShowJobForm(true);
   };
 
-  const handleDelete = (jobId) => {
-    setJobs(jobs.filter((job) => job._id !== jobId));
-    toast.success('Job deleted successfully');
+  const handleDelete = async (jobId) => {
+    try {
+      await authenticatedAxios.delete(`/jobs/${jobId}`);
+      setJobs((prevJobs) => prevJobs.filter((job) => job._id !== jobId));
+      toast.success('Job deleted successfully');
+    } catch (error) {
+      toast.error('Failed to delete job');
+    }
   };
 
-  const handleJobSubmit = (jobData) => {
-    if (editingJob) {
-      // Update existing job
-      setJobs(
-        jobs.map((job) =>
-          job._id === editingJob._id ? { ...job, ...jobData } : job
-        )
-      );
-      toast.success('Job updated successfully');
-    } else {
-      // Create new job
-      const newJob = {
-        _id: Date.now().toString(), // Temporary ID
-        ...jobData,
-        recruiterId: 'current-recruiter-id', // Replace with actual recruiter ID
-        posted: new Date().toISOString(),
-        applicantsCount: 0,
-      };
-      setJobs([...jobs, newJob]);
-      toast.success('Job created successfully');
+  const confirmDelete = (jobId) => {
+    Swal.fire({
+      title: 'Are you sure?',
+      text: 'Do you really want to delete this job?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, delete it!',
+      cancelButtonText: 'No, cancel',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        handleDelete(jobId);
+      }
+    });
+  };
+
+  const handleJobSubmit = async (jobData) => {
+    console.log('handleJobSubmit called with data:', jobData); // Add this log
+    try {
+      if (editingJob) {
+        const response = await authenticatedAxios.patch(
+          `/jobs/${editingJob._id}`,
+          jobData
+        );
+        setJobs((prevJobs) =>
+          prevJobs.map((job) =>
+            job._id === editingJob._id ? response.data : job
+          )
+        );
+        toast.success('Job updated successfully');
+      } else {
+        const newJobData = { ...jobData, recruiterId };
+        const response = await authenticatedAxios.post('/jobs', newJobData);
+        setJobs((prevJobs) => [...prevJobs, response.data]);
+        toast.success('Job created successfully');
+      }
+      setShowJobForm(false);
+      setEditingJob(null);
+    } catch (error) {
+      console.error(
+        'Error in handleJobSubmit:',
+        error.response || error.message
+      ); // Add this log
+      toast.error('Failed to submit job');
     }
-    setShowJobForm(false);
-    setEditingJob(null);
   };
 
   return (
@@ -158,7 +177,7 @@ const RecruiterDashboard = () => {
                                 <FaEdit className="text-blue-500" />
                               </button>
                               <button
-                                onClick={() => handleDelete(job._id)}
+                                onClick={() => confirmDelete(job._id)}
                                 className="btn btn-sm btn-ghost"
                               >
                                 <FaTrash className="text-red-500" />
