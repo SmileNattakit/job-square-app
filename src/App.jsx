@@ -11,7 +11,6 @@ import { Toaster } from 'react-hot-toast';
 import TalentProfile from './pages/Applicant/TalentProfile';
 import YourApplicationsPage from './pages/Applicant/YourApplicationsPage';
 import JobDetailsPage from './pages/Applicant/JobDetailsPage';
-import JobApplicationPage from './pages/Applicant/JobApplicationPage';
 
 // Recruiter Components (placeholders)
 import RecruiterDashboard from './pages/Recruiter/RecruiterDashboard';
@@ -21,8 +20,6 @@ const TalentRoutes = () => (
   <Routes>
     <Route path="/profile" element={<TalentProfile />} />
     <Route path="/your-applications" element={<YourApplicationsPage />} />
-    <Route path="/job-listings/:jobId" element={<JobDetailsPage />} />
-    <Route path="/job-listings/:jobId/apply" element={<JobApplicationPage />} />
   </Routes>
 );
 
@@ -43,6 +40,8 @@ const App = () => {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/job-listings" element={<JobListingsPage />} />
+        <Route path="/job-listings/:jobId" element={<JobDetailsPage />} />
+
         <Route path="/talent/*" element={<TalentRoutes />} />
         <Route path="/recruiter/*" element={<RecruiterRoutes />} />
       </Routes>

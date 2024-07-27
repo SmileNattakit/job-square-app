@@ -6,12 +6,15 @@ import { authenticatedAxios } from '../../services/axiosInstances';
 import { useAtom } from 'jotai';
 import { authAtom } from '../../atoms/authAtom';
 import Swal from 'sweetalert2';
+import ApplicantsModal from '../../components/Recruiter/ApplicantsModal';
 
 const RecruiterDashboard = () => {
   const [jobs, setJobs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showJobForm, setShowJobForm] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [showApplicantsModal, setShowApplicantsModal] = useState(false);
   const [authState] = useAtom(authAtom);
 
   const recruiterId = authState.user ? authState.user.userId : null;
@@ -23,7 +26,15 @@ const RecruiterDashboard = () => {
       const response = await authenticatedAxios.get(
         `/jobs/recruiter/${recruiterId}/jobs`
       );
-      setJobs(response.data);
+      const jobsData = await Promise.all(
+        response.data.map(async (job) => {
+          const applicantsResponse = await authenticatedAxios.get(
+            `/applications/count/${job._id}`
+          );
+          return { ...job, applicantsCount: applicantsResponse.data.count };
+        })
+      );
+      setJobs(jobsData);
     } catch (error) {
       toast.error('Failed to load jobs');
     } finally {
@@ -63,6 +74,8 @@ const RecruiterDashboard = () => {
       showCancelButton: true,
       confirmButtonText: 'Yes, delete it!',
       cancelButtonText: 'No, cancel',
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
     }).then((result) => {
       if (result.isConfirmed) {
         handleDelete(jobId);
@@ -71,7 +84,6 @@ const RecruiterDashboard = () => {
   };
 
   const handleJobSubmit = async (jobData) => {
-    console.log('handleJobSubmit called with data:', jobData); // Add this log
     try {
       if (editingJob) {
         const response = await authenticatedAxios.patch(
@@ -93,25 +105,26 @@ const RecruiterDashboard = () => {
       setShowJobForm(false);
       setEditingJob(null);
     } catch (error) {
-      console.error(
-        'Error in handleJobSubmit:',
-        error.response || error.message
-      ); // Add this log
       toast.error('Failed to submit job');
     }
   };
 
+  const handleViewApplicants = (job) => {
+    setSelectedJob(job);
+    setShowApplicantsModal(true);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-center text-blue-500 mb-8">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-4xl font-bold text-center text-blue-600 mb-12">
           Recruiter Dashboard
         </h1>
 
         {showJobForm ? (
-          <div className="bg-white shadow-md rounded-lg overflow-hidden mb-8">
-            <div className="p-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">
+          <div className="bg-white shadow-lg rounded-lg overflow-hidden mb-8 transition-all duration-300 ease-in-out transform hover:shadow-xl">
+            <div className="p-8">
+              <h2 className="text-2xl font-semibold text-blue-800 mb-6">
                 {editingJob ? 'Edit Job' : 'Create New Job'}
               </h2>
               <JobForm
@@ -125,62 +138,87 @@ const RecruiterDashboard = () => {
             </div>
           </div>
         ) : (
-          <div className="bg-white shadow-md rounded-lg overflow-hidden">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-gray-800">
+          <div className="bg-white shadow-lg rounded-lg overflow-hidden transition-all duration-300 ease-in-out transform hover:shadow-xl">
+            <div className="p-8">
+              <div className="flex justify-between items-center mb-8">
+                <h2 className="text-2xl font-semibold text-blue-800">
                   Your Job Listings
                 </h2>
-                <button onClick={handleCreateJob} className="btn btn-primary">
+                <button
+                  onClick={handleCreateJob}
+                  className="btn btn-primary bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full transition-colors duration-300"
+                >
                   <FaPlus className="mr-2" /> Create Job
                 </button>
               </div>
 
               {isLoading ? (
-                <div className="text-center">
-                  <div className="loading loading-spinner loading-lg"></div>
+                <div className="text-center py-8">
+                  <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
                 </div>
               ) : jobs.length === 0 ? (
-                <p className="text-center text-gray-500">No jobs posted yet.</p>
+                <p className="text-center text-gray-500 py-8">
+                  No jobs posted yet.
+                </p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="table w-full">
                     <thead>
-                      <tr>
-                        <th>Job Title</th>
-                        <th>Location</th>
-                        <th>Type</th>
-                        <th>Salary</th>
-                        <th>Applicants</th>
-                        <th>Actions</th>
+                      <tr className="bg-blue-50">
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-blue-800">
+                          Job Title
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-blue-800">
+                          Location
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-blue-800">
+                          Type
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-blue-800">
+                          Salary
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-blue-800">
+                          Applicants
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-blue-800">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {jobs.map((job) => (
-                        <tr key={job._id}>
-                          <td>{job.title}</td>
-                          <td>{job.location}</td>
-                          <td>{job.type}</td>
-                          <td>${job.salary.toLocaleString()}</td>
-                          <td>
-                            <div className="flex items-center">
-                              <FaUsers className="mr-2 text-blue-500" />
-                              {job.applicantsCount}
-                            </div>
+                        <tr
+                          key={job._id}
+                          className="border-b border-blue-100 hover:bg-blue-50 transition-colors duration-200"
+                        >
+                          <td className="px-4 py-3">{job.title}</td>
+                          <td className="px-4 py-3">{job.location}</td>
+                          <td className="px-4 py-3">{job.type}</td>
+                          <td className="px-4 py-3">
+                            ${job.salary.toLocaleString()}
                           </td>
-                          <td>
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={() => handleViewApplicants(job)}
+                              className="flex items-center text-blue-600 hover:text-blue-800 transition-colors duration-200"
+                            >
+                              <FaUsers className="mr-2" />
+                              {job.applicantsCount || 0}
+                            </button>
+                          </td>
+                          <td className="px-4 py-3">
                             <div className="flex space-x-2">
                               <button
                                 onClick={() => handleEditJob(job)}
-                                className="btn btn-sm btn-ghost"
+                                className="text-blue-600 hover:text-blue-800 transition-colors duration-200"
                               >
-                                <FaEdit className="text-blue-500" />
+                                <FaEdit />
                               </button>
                               <button
                                 onClick={() => confirmDelete(job._id)}
-                                className="btn btn-sm btn-ghost"
+                                className="text-red-600 hover:text-red-800 transition-colors duration-200"
                               >
-                                <FaTrash className="text-red-500" />
+                                <FaTrash />
                               </button>
                             </div>
                           </td>
@@ -192,6 +230,13 @@ const RecruiterDashboard = () => {
               )}
             </div>
           </div>
+        )}
+
+        {showApplicantsModal && (
+          <ApplicantsModal
+            job={selectedJob}
+            onClose={() => setShowApplicantsModal(false)}
+          />
         )}
       </div>
     </div>

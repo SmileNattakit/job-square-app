@@ -199,7 +199,7 @@ const CompanyProfile = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Location
+                  Company Address
                 </label>
                 <div className="relative">
                   <FaMapMarkerAlt className="absolute top-3 left-3 text-gray-400" />
