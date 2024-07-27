@@ -10,7 +10,7 @@ const Hero = () => (
       Connect with real employers, explore genuine opportunities, and take the
       next step in your professional journey.
     </p>
-    <div className="flex justify-center mb-12">
+    {/* <div className="flex justify-center mb-12">
       <input
         type="text"
         placeholder="Search for jobs..."
@@ -19,7 +19,7 @@ const Hero = () => (
       <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-r-lg">
         Search
       </button>
-    </div>
+    </div> */}
   </section>
 );
 

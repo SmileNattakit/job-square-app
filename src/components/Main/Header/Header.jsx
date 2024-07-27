@@ -105,18 +105,18 @@ const Header = () => {
                         ) : (
                           <>
                             <Link
+                              to={`/recruiter/company-profile/${user.userId}`}
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                              role="menuitem"
+                            >
+                              Company Profile
+                            </Link>
+                            <Link
                               to="/recruiter/dashboard"
                               className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"
                               role="menuitem"
                             >
                               Dashboard
-                            </Link>
-                            <Link
-                              to="/recruiter/post-job"
-                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"
-                              role="menuitem"
-                            >
-                              Post a Job
                             </Link>
                           </>
                         )}
@@ -195,16 +195,16 @@ const Header = () => {
                 {user && user.role === 'recruiter' && (
                   <>
                     <Link
+                      to={`/recruiter/company-profile/${user.userId}`}
+                      className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition duration-150 ease-in-out"
+                    >
+                      Company Profile
+                    </Link>
+                    <Link
                       to="/recruiter/dashboard"
                       className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition duration-150 ease-in-out"
                     >
                       Dashboard
-                    </Link>
-                    <Link
-                      to="/recruiter/post-job"
-                      className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition duration-150 ease-in-out"
-                    >
-                      Post a Job
                     </Link>
                   </>
                 )}

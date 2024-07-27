@@ -1,70 +1,79 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
-  FaUser,
+  FaBuilding,
   FaEnvelope,
-  FaPhone,
-  FaFileAlt,
+  FaGlobe,
   FaUpload,
   FaTrash,
-  FaDownload,
+  FaImage,
 } from 'react-icons/fa';
 import { authenticatedAxios } from '../../services/axiosInstances';
 import { useAtom } from 'jotai';
 import { authAtom } from '../../atoms/authAtom';
 import { toast } from 'react-toastify';
 
-const TalentProfile = () => {
+const CompanyProfile = () => {
   const { register, handleSubmit, setValue, watch } = useForm();
-  const [cvFile, setCvFile] = useState(null);
-  const [existingCvUrl, setExistingCvUrl] = useState(null);
+  const [logoFile, setLogoFile] = useState(null);
+  const [bannerFile, setBannerFile] = useState(null);
+  const [existingLogoUrl, setExistingLogoUrl] = useState(null);
+  const [existingBannerUrl, setExistingBannerUrl] = useState(null);
   const [auth] = useAtom(authAtom);
   const [isLoading, setIsLoading] = useState(false);
   const [initialData, setInitialData] = useState({});
-  const [cvDownloadUrl, setCvDownloadUrl] = useState(null);
+
   const inputFields = [
-    { name: 'firstName', label: 'First Name', icon: FaUser, type: 'text' },
-    { name: 'lastName', label: 'Last Name', icon: FaUser, type: 'text' },
+    {
+      name: 'companyName',
+      label: 'Company Name',
+      icon: FaBuilding,
+      type: 'text',
+    },
     { name: 'email', label: 'Email', icon: FaEnvelope, type: 'email' },
-    { name: 'phoneNumber', label: 'Phone Number', icon: FaPhone, type: 'tel' },
+    { name: 'website', label: 'Website', icon: FaGlobe, type: 'url' },
   ];
 
   useEffect(() => {
-    const fetchTalentData = async () => {
+    const fetchCompanyData = async () => {
       try {
         const response = await authenticatedAxios.get(
-          `/talents/${auth.user.userId}`
+          `/recruiters/${auth.user.userId}`
         );
         const data = response.data;
         setInitialData(data);
         for (const field of inputFields) {
           setValue(field.name, data[field.name]);
         }
-        if (data.cvFile) {
-          setExistingCvUrl(data.cvFile);
+        setValue('description', data.description);
+        if (data.logo) {
+          setExistingLogoUrl(data.logo);
+        }
+        if (data.banner) {
+          setExistingBannerUrl(data.banner);
         }
       } catch (error) {
-        console.error('Error fetching talent data:', error);
+        console.error('Error fetching company data:', error);
         toast.error('Failed to load profile data');
       }
     };
     if (auth.user && auth.user.userId) {
-      fetchTalentData();
+      fetchCompanyData();
     }
   }, [auth.user, setValue]);
 
-  const handleFileChange = (e) => {
+  const handleFileChange = (e, setFile) => {
     const file = e.target.files[0];
     if (file && file.size <= 5 * 1024 * 1024) {
       // 5MB limit
-      setCvFile(file);
+      setFile(file);
     } else {
       toast.error('File size exceeds 5MB limit');
     }
   };
 
-  const handleRemoveExistingCv = () => {
-    setExistingCvUrl(null);
+  const handleRemoveExistingFile = (setExistingUrl) => {
+    setExistingUrl(null);
   };
 
   const onSubmit = async (data) => {
@@ -79,21 +88,33 @@ const TalentProfile = () => {
         }
       });
 
-      if (cvFile) {
-        formData.append('cvFile', cvFile);
-      } else if (existingCvUrl === null && initialData.cvFile) {
-        formData.append('removeCv', 'true');
+      if (logoFile) {
+        formData.append('logo', logoFile);
+      } else if (existingLogoUrl === null && initialData.logo) {
+        formData.append('removeLogo', 'true');
+      }
+
+      if (bannerFile) {
+        formData.append('banner', bannerFile);
+      } else if (existingBannerUrl === null && initialData.banner) {
+        formData.append('removeBanner', 'true');
       }
 
       // Only send request if there are changes
-      if (formData.entries().next().done && !cvFile && existingCvUrl !== null) {
+      if (
+        formData.entries().next().done &&
+        !logoFile &&
+        !bannerFile &&
+        existingLogoUrl !== null &&
+        existingBannerUrl !== null
+      ) {
         toast.info('No changes to update');
         setIsLoading(false);
         return;
       }
 
       const response = await authenticatedAxios.patch(
-        `/talents/${auth.user.userId}`,
+        `/recruiters/${auth.user.userId}`,
         formData,
         {
           headers: {
@@ -104,13 +125,19 @@ const TalentProfile = () => {
 
       console.log('Profile updated successfully:', response.data);
       toast.success('Profile updated successfully');
-      if (response.data.talent.cvFile) {
-        setExistingCvUrl(response.data.talent.cvFile);
+      if (response.data.recruiter.logo) {
+        setExistingLogoUrl(response.data.recruiter.logo);
       } else {
-        setExistingCvUrl(null);
+        setExistingLogoUrl(null);
       }
-      setCvFile(null);
-      setInitialData(response.data.talent);
+      if (response.data.recruiter.banner) {
+        setExistingBannerUrl(response.data.recruiter.banner);
+      } else {
+        setExistingBannerUrl(null);
+      }
+      setLogoFile(null);
+      setBannerFile(null);
+      setInitialData(response.data.recruiter);
     } catch (error) {
       console.error('Error updating profile:', error);
       toast.error('Failed to update profile');
@@ -119,28 +146,11 @@ const TalentProfile = () => {
     }
   };
 
-  const handleDownloadCV = async () => {
-    try {
-      if (!existingCvUrl) {
-        toast.error('No CV file available');
-        return;
-      }
-
-      window.open(
-        `https://res.cloudinary.com/dq8ghevjd/raw/upload/${existingCvUrl}`,
-        '_blank'
-      );
-    } catch (error) {
-      console.error('Error downloading CV:', error);
-      toast.error('Failed to download CV');
-    }
-  };
-
   return (
     <div className="bg-gray-100 min-h-screen">
       <main className="container mx-auto px-4 py-8">
         <h2 className="text-3xl font-bold text-gray-800 mb-6">
-          Talent Profile
+          Company Profile
         </h2>
         <div className="bg-white rounded-lg shadow-md p-6">
           <form onSubmit={handleSubmit(onSubmit)}>
@@ -168,21 +178,33 @@ const TalentProfile = () => {
               ))}
             </div>
             <div className="mb-6">
-              <label className="block mb-2 text-sm font-medium text-gray-900">
-                CV
+              <label
+                htmlFor="description"
+                className="block mb-2 text-sm font-medium text-gray-900"
+              >
+                Company Description
               </label>
-              {existingCvUrl ? (
+              <textarea
+                id="description"
+                {...register('description')}
+                rows={4}
+                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+              ></textarea>
+            </div>
+            <div className="mb-6">
+              <label className="block mb-2 text-sm font-medium text-gray-900">
+                Company Logo
+              </label>
+              {existingLogoUrl ? (
                 <div className="flex items-center space-x-2">
-                  <button
-                    onClick={handleDownloadCV}
-                    className="text-blue-500 hover:underline flex items-center"
-                  >
-                    <FaDownload className="mr-2" />
-                    Download Existing CV
-                  </button>
+                  <img
+                    src={existingLogoUrl}
+                    alt="Company Logo"
+                    className="w-20 h-20 object-cover"
+                  />
                   <button
                     type="button"
-                    onClick={handleRemoveExistingCv}
+                    onClick={() => handleRemoveExistingFile(setExistingLogoUrl)}
                     className="text-red-500 hover:text-red-700"
                   >
                     <FaTrash />
@@ -198,22 +220,72 @@ const TalentProfile = () => {
                         or drag and drop
                       </p>
                       <p className="text-xs text-gray-500">
-                        PDF, DOC, DOCX (MAX. 5MB)
+                        PNG, JPG, GIF (MAX. 5MB)
                       </p>
                     </div>
                     <input
                       type="file"
                       className="hidden"
-                      onChange={handleFileChange}
-                      accept=".pdf,.doc,.docx"
+                      onChange={(e) => handleFileChange(e, setLogoFile)}
+                      accept="image/*"
                     />
                   </label>
                 </div>
               )}
-              {cvFile && (
+              {logoFile && (
                 <p className="mt-2 text-sm text-gray-500">
-                  <FaFileAlt className="inline mr-2" />
-                  {cvFile.name}
+                  <FaImage className="inline mr-2" />
+                  {logoFile.name}
+                </p>
+              )}
+            </div>
+            <div className="mb-6">
+              <label className="block mb-2 text-sm font-medium text-gray-900">
+                Company Banner
+              </label>
+              {existingBannerUrl ? (
+                <div className="flex items-center space-x-2">
+                  <img
+                    src={existingBannerUrl}
+                    alt="Company Banner"
+                    className="w-full h-32 object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleRemoveExistingFile(setExistingBannerUrl)
+                    }
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    <FaTrash />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center w-full">
+                  <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <FaUpload className="w-10 h-10 mb-3 text-gray-400" />
+                      <p className="mb-2 text-sm text-gray-500">
+                        <span className="font-semibold">Click to upload</span>{' '}
+                        or drag and drop
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        PNG, JPG, GIF (MAX. 5MB)
+                      </p>
+                    </div>
+                    <input
+                      type="file"
+                      className="hidden"
+                      onChange={(e) => handleFileChange(e, setBannerFile)}
+                      accept="image/*"
+                    />
+                  </label>
+                </div>
+              )}
+              {bannerFile && (
+                <p className="mt-2 text-sm text-gray-500">
+                  <FaImage className="inline mr-2" />
+                  {bannerFile.name}
                 </p>
               )}
             </div>
@@ -231,4 +303,4 @@ const TalentProfile = () => {
   );
 };
 
-export default TalentProfile;
+export default CompanyProfile;

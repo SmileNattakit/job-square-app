@@ -73,7 +73,11 @@ function useLogin() {
 
         console.log('New auth state set:', newAuthState);
 
-        navigate(decodedToken.role === 'talent' ? '/job-listings' : '/admin');
+        navigate(
+          decodedToken.role === 'talent'
+            ? '/job-listings'
+            : '/recruiter/dashboard'
+        );
 
         setMessage(response.data.message || 'Login successful');
       } else {
