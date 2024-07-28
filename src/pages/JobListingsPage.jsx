@@ -13,23 +13,31 @@ import {
 const JobListingsPage = () => {
   const { jobs, loading } = useJobs();
   const [showAlert, setShowAlert] = useState(true);
+  const [showSpinner, setShowSpinner] = useState(false);
 
   useEffect(() => {
+    let timer;
     if (loading && showAlert) {
-      Swal.fire({
-        title: 'Please Note',
-        html: `
-          <p>This project is a learning endeavor for the developer.</p>
-          <p>We're using the free version of Render, which means there are no costs involved.</p>
-          <p>If you're seeing this page, it means Render is restarting after a period of inactivity.</p>
-          <p>Please wait for a moment and try refreshing this page. It may take 1-5 minutes.</p>
-        `,
-        icon: 'info',
-        confirmButtonText: 'Understood',
-      }).then(() => {
-        setShowAlert(false);
-      });
+      setShowSpinner(true);
+      timer = setTimeout(() => {
+        Swal.fire({
+          title: 'Please Note',
+          html: `
+            <p>This project is a learning endeavor for the developer.</p>
+            <p>We're using the free version of Render, which means there are no costs involved.</p>
+            <p>If you're seeing this page, it means Render is restarting after a period of inactivity.</p>
+            <p>Please wait for a moment and try refreshing this page. It may take 1-5 minutes.</p>
+          `,
+          icon: 'info',
+          confirmButtonText: 'Understood',
+        }).then(() => {
+          setShowAlert(false);
+          setShowSpinner(false);
+        });
+      }, 2000);
     }
+
+    return () => clearTimeout(timer);
   }, [loading, showAlert]);
 
   useEffect(() => {
@@ -38,8 +46,12 @@ const JobListingsPage = () => {
     }
   }, [jobs]);
 
-  if (loading) {
-    return null; // Return null instead of showing a loading message
+  if (loading && showSpinner) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="w-16 h-16 border-4 border-blue-500 border-solid border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
   }
 
   if (!Array.isArray(jobs)) {
@@ -112,7 +124,7 @@ const JobListingsPage = () => {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {jobs.length === 0 ? (
             <p className="text-gray-600 text-center col-span-full">
-              No job positions match the criteria.
+              ไม่พบตำแหน่งงานที่ตรงกับเงื่อนไข
             </p>
           ) : (
             jobs.map((job) => (
