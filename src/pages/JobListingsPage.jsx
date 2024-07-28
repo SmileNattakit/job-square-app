@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useJobs } from '../atoms/jobAtom';
+import Swal from 'sweetalert2';
 import {
   FaSearch,
   FaMapMarkerAlt,
@@ -11,6 +12,25 @@ import {
 
 const JobListingsPage = () => {
   const { jobs, loading } = useJobs();
+  const [showAlert, setShowAlert] = useState(true);
+
+  useEffect(() => {
+    if (loading && showAlert) {
+      Swal.fire({
+        title: 'Please Note',
+        html: `
+          <p>This project is a learning endeavor for the developer.</p>
+          <p>We're using the free version of Render, which means there are no costs involved.</p>
+          <p>If you're seeing this page, it means Render is restarting after a period of inactivity.</p>
+          <p>Please wait for a moment and try refreshing this page. It may take 1-5 minutes.</p>
+        `,
+        icon: 'info',
+        confirmButtonText: 'Understood',
+      }).then(() => {
+        setShowAlert(false);
+      });
+    }
+  }, [loading, showAlert]);
 
   useEffect(() => {
     if (jobs && jobs.length > 0) {
@@ -19,7 +39,7 @@ const JobListingsPage = () => {
   }, [jobs]);
 
   if (loading) {
-    return <div className="container mx-auto px-4 py-8">กำลังโหลด...</div>;
+    return null; // Return null instead of showing a loading message
   }
 
   if (!Array.isArray(jobs)) {
@@ -92,7 +112,7 @@ const JobListingsPage = () => {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {jobs.length === 0 ? (
             <p className="text-gray-600 text-center col-span-full">
-              ไม่พบตำแหน่งงานที่ตรงกับเงื่อนไข
+              No job positions match the criteria.
             </p>
           ) : (
             jobs.map((job) => (
