@@ -9,6 +9,8 @@ import {
   FaClock,
   FaUpload,
   FaTimes,
+  FaDownload,
+  FaTrash,
 } from 'react-icons/fa';
 import { authenticatedAxios } from '../../services/axiosInstances';
 import { useAtom } from 'jotai';
@@ -21,7 +23,7 @@ const JobDetailPage = () => {
   const [auth] = useAtom(authAtom);
   const [job, setJob] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [useCurrentCV, setUseCurrentCV] = useState(true);
+  const [existingCvUrl, setExistingCvUrl] = useState(null);
   const [file, setFile] = useState(null);
   const [interest, setInterest] = useState('');
   const [coverLetter, setCoverLetter] = useState('');
@@ -40,6 +42,26 @@ const JobDetailPage = () => {
     fetchJobDetails();
   }, [jobId, navigate]);
 
+  useEffect(() => {
+    const fetchTalentData = async () => {
+      try {
+        const response = await authenticatedAxios.get(
+          `/talents/${auth.user.userId}`
+        );
+        const data = response.data;
+        if (data.cvFile) {
+          setExistingCvUrl(data.cvFile);
+        }
+      } catch (error) {
+        console.error('Error fetching talent data:', error);
+        toast.error('Failed to load CV data');
+      }
+    };
+    if (auth.user && auth.user.userId) {
+      fetchTalentData();
+    }
+  }, [auth.user]);
+
   const handleApply = () => {
     if (!auth.user) {
       navigate('/login', { state: { from: `/job-listings/${jobId}` } });
@@ -49,7 +71,29 @@ const JobDetailPage = () => {
   };
 
   const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
+    const selectedFile = e.target.files[0];
+    if (selectedFile && selectedFile.size <= 5 * 1024 * 1024) {
+      setFile(selectedFile);
+    } else {
+      toast.error('File size exceeds 5MB limit');
+    }
+  };
+
+  const handleRemoveExistingCv = () => {
+    setExistingCvUrl(null);
+  };
+
+  const handleDownloadCV = () => {
+    try {
+      if (!existingCvUrl) {
+        toast.error('No CV file available');
+        return;
+      }
+      window.open(existingCvUrl, '_blank');
+    } catch (error) {
+      console.error('Error downloading CV:', error);
+      toast.error('Failed to download CV');
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -57,18 +101,14 @@ const JobDetailPage = () => {
     setIsSubmitting(true);
 
     try {
-      const formData = new FormData();
-      formData.append('talentId', auth.user.userId);
-      formData.append('useCurrentCV', useCurrentCV);
-      if (!useCurrentCV && file) {
-        formData.append('cv', file);
-      }
-      formData.append('interest', interest);
-      formData.append('coverLetter', coverLetter);
+      const applicationData = {
+        jobId: jobId,
+        talentId: auth.user.userId,
+        interest: interest,
+        coverLetter: coverLetter,
+      };
 
-      await authenticatedAxios.post(`/jobs/${jobId}/apply`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      await authenticatedAxios.post('/applications/apply', applicationData);
 
       toast.success('Application submitted successfully!');
       setIsModalOpen(false);
@@ -98,7 +138,6 @@ const JobDetailPage = () => {
           <FaChevronLeft className="mr-2" /> Back to Job Listings
         </Link>
         <div className="bg-white rounded-lg shadow-lg p-8">
-          {' '}
           {job.recruiterId.banner && (
             <div
               className="w-full h-64 bg-cover bg-center"
@@ -217,54 +256,49 @@ const JobDetailPage = () => {
                 ></textarea>
               </div>
               <div>
-                <p className="text-sm font-semibold text-blue-700 mb-2">
-                  Submit an updated CV
-                </p>
-                <div className="flex items-center gap-4">
-                  <label className="flex items-center">
+                <p className="text-sm font-semibold text-blue-700 mb-2">CV</p>
+                {existingCvUrl ? (
+                  <div className="flex items-center space-x-2">
+                    <button
+                      type="button"
+                      onClick={handleDownloadCV}
+                      className="text-blue-500 hover:underline flex items-center"
+                    >
+                      <FaDownload className="mr-2" />
+                      Download Existing CV
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRemoveExistingCv}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
+                ) : (
+                  <div>
                     <input
-                      type="radio"
-                      checked={useCurrentCV}
-                      onChange={() => setUseCurrentCV(true)}
-                      className="mr-2 text-blue-600"
+                      id="cv-upload"
+                      type="file"
+                      onChange={handleFileChange}
+                      className="hidden"
+                      accept=".pdf,.doc,.docx"
                     />
-                    Use current CV
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      checked={!useCurrentCV}
-                      onChange={() => setUseCurrentCV(false)}
-                      className="mr-2 text-blue-600"
-                    />
-                    Upload new CV
-                  </label>
-                </div>
+                    <label
+                      htmlFor="cv-upload"
+                      className="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center hover:bg-blue-600 transition duration-300 inline-block"
+                    >
+                      <FaUpload className="mr-2" /> Choose File
+                    </label>
+                    <p className="text-sm text-blue-500 mt-2">
+                      {file ? file.name : 'No file chosen'}
+                    </p>
+                    <p className="text-xs text-blue-400">
+                      PDF, DOC, DOCX files only, max 5MB
+                    </p>
+                  </div>
+                )}
               </div>
-              {!useCurrentCV && (
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => document.getElementById('cv-upload').click()}
-                    className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center hover:bg-blue-600 transition duration-300"
-                  >
-                    <FaUpload className="mr-2" /> Choose File
-                  </button>
-                  <input
-                    id="cv-upload"
-                    type="file"
-                    onChange={handleFileChange}
-                    className="hidden"
-                    accept=".pdf"
-                  />
-                  <p className="text-sm text-blue-500 mt-2">
-                    {file ? file.name : 'No file chosen'}
-                  </p>
-                  <p className="text-xs text-blue-400">
-                    PDF files only, max 5MB
-                  </p>
-                </div>
-              )}
               <div>
                 <label className="block text-sm font-semibold text-blue-700 mb-2">
                   Cover Letter (Optional)

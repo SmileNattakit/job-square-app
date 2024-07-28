@@ -23,10 +23,10 @@ const JobListingsPage = () => {
         Swal.fire({
           title: 'Please Note',
           html: `
-            <p>This project is a learning endeavor for the developer.</p>
-            <p>We're using the free version of Render, which means there are no costs involved.</p>
-            <p>If you're seeing this page, it means Render is restarting after a period of inactivity.</p>
-            <p>Please wait for a moment and try refreshing this page. It may take 1-5 minutes.</p>
+            <p>This project is for learning purposes.</p>
+      <p>We use Render's free tier, causing occasional restarts.</p>
+      <p>If you see this, Render is restarting due to inactivity.</p>
+      <p>Please wait a moment and refresh the page. It may take 1-5 minutes.</p>
           `,
           icon: 'info',
           confirmButtonText: 'Understood',
@@ -124,7 +124,7 @@ const JobListingsPage = () => {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {jobs.length === 0 ? (
             <p className="text-gray-600 text-center col-span-full">
-              ไม่พบตำแหน่งงานที่ตรงกับเงื่อนไข
+              No job positions match the criteria.
             </p>
           ) : (
             jobs.map((job) => (

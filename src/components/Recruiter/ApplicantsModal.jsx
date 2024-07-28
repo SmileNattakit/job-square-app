@@ -105,16 +105,24 @@ const ApplicantsModal = ({ job, onClose }) => {
                   <div className="flex justify-between items-start">
                     <div className="flex-grow">
                       <p className="text-xl font-medium text-blue-800">
-                        {applicant.talentId.name}
+                        {applicant.talentId.firstName}{' '}
+                        {applicant.talentId.lastName}
                       </p>
                       <p className="text-sm text-gray-600 mt-1">
                         {applicant.talentId.email}
                       </p>
-                      <p className="mt-2 text-gray-700">{applicant.message}</p>
+                      <p className="text-sm text-gray-600">
+                        Phone: {applicant.talentId.phoneNumber}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        Applied:{' '}
+                        {new Date(applicant.appliedAt).toLocaleString()}
+                      </p>
+                      <p className="mt-2 text-gray-700">{applicant.interest}</p>
                     </div>
                     <div className="flex flex-col items-end ml-4">
                       <a
-                        href={applicant.talentId.resume}
+                        href={applicant.talentId.cvFile}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center text-blue-600 hover:text-blue-800 transition-colors duration-200 mb-2"

@@ -21,7 +21,6 @@ const TalentProfile = () => {
   const [auth] = useAtom(authAtom);
   const [isLoading, setIsLoading] = useState(false);
   const [initialData, setInitialData] = useState({});
-  const [cvDownloadUrl, setCvDownloadUrl] = useState(null);
   const inputFields = [
     { name: 'firstName', label: 'First Name', icon: FaUser, type: 'text' },
     { name: 'lastName', label: 'Last Name', icon: FaUser, type: 'text' },
@@ -120,16 +119,25 @@ const TalentProfile = () => {
   };
 
   const handleDownloadCV = async () => {
-    try {
-      if (!existingCvUrl) {
-        toast.error('No CV file available');
-        return;
-      }
+    if (!existingCvUrl) {
+      toast.error('No CV file available');
+      return;
+    }
 
-      window.open(
-        `https://res.cloudinary.com/dq8ghevjd/raw/upload/${existingCvUrl}`,
-        '_blank'
+    try {
+      const publicId = existingCvUrl.split('/').pop().split('.')[0];
+      const response = await authenticatedAxios.get(
+        `/talents/download-cv/${publicId}`
       );
+      const { downloadUrl } = response.data;
+
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.target = '_blank';
+      link.download = 'CV.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (error) {
       console.error('Error downloading CV:', error);
       toast.error('Failed to download CV');
@@ -174,6 +182,7 @@ const TalentProfile = () => {
               {existingCvUrl ? (
                 <div className="flex items-center space-x-2">
                   <button
+                    type="button"
                     onClick={handleDownloadCV}
                     className="text-blue-500 hover:underline flex items-center"
                   >

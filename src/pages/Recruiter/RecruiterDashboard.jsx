@@ -29,9 +29,17 @@ const RecruiterDashboard = () => {
       const jobsData = await Promise.all(
         response.data.map(async (job) => {
           const applicantsResponse = await authenticatedAxios.get(
-            `/applications/count/${job._id}`
+            `/applications/${job._id}`
           );
-          return { ...job, applicantsCount: applicantsResponse.data.count };
+          const applicants = applicantsResponse.data;
+          const pendingCount = applicants.filter(
+            (app) => app.status === 'Pending'
+          ).length;
+          return {
+            ...job,
+            applicantsCount: applicants.length,
+            pendingCount: pendingCount,
+          };
         })
       );
       setJobs(jobsData);
@@ -204,6 +212,11 @@ const RecruiterDashboard = () => {
                             >
                               <FaUsers className="mr-2" />
                               {job.applicantsCount || 0}
+                              {job.pendingCount > 0 && (
+                                <span className="ml-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                                  {job.pendingCount} new
+                                </span>
+                              )}
                             </button>
                           </td>
                           <td className="px-4 py-3">
